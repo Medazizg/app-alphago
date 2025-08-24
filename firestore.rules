@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isValidUser() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile, admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Users can create their own profile during registration
+      allow create: if isAuthenticated() && 
+                       isOwner(userId) && 
+                       request.resource.data.uid == userId &&
+                       request.resource.data.role == 'user';
+      
+      // Users can update their own profile, admins can update any profile
+      allow update: if (isOwner(userId) && request.resource.data.role == 'user') || 
+                       isAdmin();
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      // Users can read their own orders, admins can read all
+      allow read: if isValidUser() && 
+                     (resource.data.createdBy == request.auth.uid || isAdmin());
+      
+      // Users can create orders, must set createdBy to their uid
+      allow create: if isValidUser() && 
+                       request.resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.status in ['pending'] &&
+                       request.resource.data.keys().hasAll(['customerName', 'customerPhone', 'zoneCode', 'zoneName', 'coords', 'priceTND', 'status', 'createdBy']) &&
+                       request.resource.data.priceTND is number &&
+                       request.resource.data.priceTND > 0 &&
+                       request.resource.data.coords.keys().hasAll(['lat', 'lng']) &&
+                       request.resource.data.coords.lat is number &&
+                       request.resource.data.coords.lng is number;
+      
+      // Users can update their own pending orders, admins can update any order
+      allow update: if isValidUser() && 
+                       ((resource.data.createdBy == request.auth.uid && 
+                         resource.data.status == 'pending' &&
+                         request.resource.data.createdBy == resource.data.createdBy) ||
+                        isAdmin());
+      
+      // Users can delete their own pending orders, admins can delete any order
+      allow delete: if isValidUser() && 
+                       ((resource.data.createdBy == request.auth.uid && 
+                         resource.data.status == 'pending') ||
+                        isAdmin());
+    }
+    
+    // Zones collection
+    match /zones/{zoneCode} {
+      // Anyone can read zones
+      allow read: if true;
+      
+      // Only admins can create, update, or delete zones
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Admin analytics collection
+    match /admin_analytics/{document} {
+      // Only admins can read, write, or delete analytics data
+      allow read, write, delete: if isAdmin();
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

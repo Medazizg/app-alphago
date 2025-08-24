@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Alphago",
+    "slug": "alphago-delivery",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/alphago-logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/alphago-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#3252A2"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.alphago.delivery",
+      "newArchEnabled": false,
+      "config": {
+        "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/alphago-logo.png",
+        "backgroundColor": "#3252A2"
+      },
+      "package": "com.alphago.delivery",
+      "newArchEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/alphago-logo.png"
+    },
+    "plugins": [],
+    "newArchEnabled": false,
+    "experiments": {
+      "turboModules": false
+    }
+  }
+}
